@@ -52,7 +52,16 @@
         </div></div>
     
     <div class="screen2">
-        sc2
+        <div class="onePoke">
+            <h1 id="pokeName" class="mdc-typography--headline4">Pokemon Name</h1>
+            <div id="classes">
+                <h1 id="pokeClass" class="mdc-typography--headline5">Classes:</h1>
+            </div>
+            <div id="stats">
+                <br> <br>
+                <h1 id="pokeStats" class="mdc-typography--headline6">Stats:</h1>
+            </div>
+        </div>
     </div>
     
     <div class="screen3">
@@ -64,6 +73,7 @@
 
         let dataRef;
         let chosenPokeLink;
+        let chonePokeData;
         
         const showScreen = (sNumber) =>{
             switch(sNumber) {
@@ -84,6 +94,44 @@
                 break;        
         }};
         showScreen(1);
+        
+        const changePokeData = () => {
+            let pokeName = document.querySelector(".onePoke #pokeName");
+            let pokeClass = document.querySelector(".onePoke #pokeClass");
+            let classHolder =  document.querySelector(".onePoke #classes");
+            let pokeStats = document.querySelector(".onePoke #pokeStats");
+            let statsHolder =  document.querySelector(".onePoke #stats");
+            
+            while (classHolder.childNodes.length > 1) {
+                classHolder.removeChild(classHolder.lastChild);
+            }
+            
+            while (statsHolder.childNodes.length > 1) {
+                statsHolder.removeChild(statsHolder.lastChild);
+            }
+            
+            let name = chonePokeData["name"]
+            pokeName.textContent = name[0].toUpperCase() + name.slice(1);
+            
+            let classString;
+            for(let i=0; i<chonePokeData["types"].length; i++)
+                {
+                    let cCopy = pokeClass.cloneNode(true);
+                    classString=chonePokeData["types"][i]["type"]["name"];
+                    cCopy.textContent=classString;
+                    classHolder.appendChild(cCopy); 
+
+                }
+            
+
+            for(let i=0; i<chonePokeData["stats"].length; i++)
+                {
+                    let sCopy = pokeStats.cloneNode(true);
+                    classString=chonePokeData["stats"][i]["stat"]["name"] + ": "+ chonePokeData["stats"][i]["base_stat"];
+                    sCopy.textContent=classString;
+                    statsHolder.appendChild(sCopy); 
+                }
+        }
         
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', function() {
@@ -111,16 +159,22 @@
           if(selectedP != ""){
                console.log(dataRef["results"]);
               for(let i = 0; i< dataRef["results"].length; i++){
-                  //console.log("comparing: " + dataRef["results"][i]["name"] + "  " + selectedP);
                   if(dataRef["results"][i]["name"] == selectedP){
-                      chosenPokeLink = dataRef["results"][i]["url"];                      
-                  }
+                      chosenPokeLink = dataRef["results"][i]["url"];
+                      fetch(chosenPokeLink)
+                      .then(response => response.json())
+                      .then(data => {
+                          console.log(data);
+                          chonePokeData=data;
+                          changePokeData();
+                          showScreen(2);
+                      })};
               }
               };
           });
         
 
-        let endpoint = "https://pokeapi.co/api/v2/pokemon";
+        let endpoint = "https://pokeapi.co/api/v2/pokemon?limit=151";
           fetch(endpoint)
           .then(response => response.json())
           .then(data => {
