@@ -49,6 +49,9 @@
           <div class="mdc-button__ripple"></div>
           <span class="mdc-button__label">Go</span>
         </button>
+            
+            <h1 id="pokeClass" class="mdc-typography--headline5">Weather Forcast:</h1>
+            <div id="columnchart_values" style="width: 900px; height: 300px;"></div>
         </div></div>
     
     <div class="screen2">
@@ -81,6 +84,8 @@
         let dataRef;
         let chosenPokeLink;
         let chonePokeData;
+        let temps = [];
+        temps.push(["Day", "Temperature"]);
         let db = new Dexie("pokeHistory");
           db.version(1).stores({
               pokes: 'name, speed, defense, attack, hp'
@@ -159,8 +164,6 @@
         }
         
         const displayHistory = () => {
-           
-            
             let pokeName = document.querySelector(".onePoke #pokeName");
             let pokeStat = document.querySelector(".onePoke #pokeStats");
             let historyContainer =  document.querySelector(".pokeHistory");
@@ -172,7 +175,6 @@
             db.pokes.toArray()
             .then ( (arr) => {
             for (let p of arr) {
-                console.log(p);
                 let clomeName = pokeName.cloneNode(true);
                 clomeName.textContent = p["name"];
                 historyContainer.appendChild(clomeName);
@@ -193,30 +195,36 @@
                 speedStat.textContent = "speed: " + p["speed"];
                 historyContainer.appendChild(speedStat);
             }});
-            
-            //console.log (pokes);
-            //console.log (arr);
-            
-            
-            //let clomeName = pokeName.cloneNode(true);
-            //clomeName.textContent = pokes["_value"][0]["name"];
-            
-            /*
-            let pokeStats = document.querySelector(".pokeHistory #pokeStats");
-            let statsHolder =  document.querySelector(".pokeHistory #stats");
+        }
+        
+        const getWeather = (long, lat) => {
+          let endpt = " https://api.weather.gov/points/" + lat + "," + long;
+          fetch(endpt)
+          .then(response => response.json())
+          .then(data => {
+              console.log(data);
+              let nedEnd = data["properties"]["forecast"];
 
-            while (statsHolder.childNodes.length > 1) {
-                statsHolder.removeChild(statsHolder.lastChild);
-            }
-
-            for(let i=0; i<chonePokeData["stats"].length; i++)
-                {
-                    let sCopy = pokeStats.cloneNode(true);
-                    classString=chonePokeData["stats"][i]["stat"]["name"] + ": "+ chonePokeData["stats"][i]["base_stat"];
-                    sCopy.textContent=classString;
-                    statsHolder.appendChild(sCopy); 
-                }
-            */
+              fetch(nedEnd)
+              .then(response => response.json())
+              .then(data => {
+                  let neededData = data["properties"]["periods"];
+                  console.log(neededData);
+                  let daily = [];
+                  for(let i=0; i<neededData.length; i++){
+                      if(["Today", "Thursday", "Friday", "Saturday", "Sunday", "Monday", "Tuesday"].includes(neededData[i]["name"])){
+                          daily.push(neededData[i]);
+                      }
+                  }
+                  console.log(daily);
+                  for(let i=0; i<daily.length; i++){
+                      let dayObj = [daily[i]["name"], daily[i]["temperature"]];
+                      temps.push(dayObj);
+                  }
+                  console.log(temps);
+                  createChart();
+              });
+          });
         }
         
         if ('serviceWorker' in navigator) {
@@ -279,6 +287,57 @@
             dataRef=data;
         });
         
+        
+        showLocation = (position) => {
+            let latitude = position.coords.latitude;
+            let longitude = position.coords.longitude;
+            getWeather(longitude, latitude);
+            //alert("Latitude : " + latitude + " Longitude: " + longitude);
+         }
+
+        errorHandler = (err) => {
+            if(err.code == 1) {
+               alert("Error: Access is denied!");
+            } else if( err.code == 2) {
+               alert("Error: Position is unavailable!");
+            }
+         }
+			
+        getLocation = () => {
+
+            if(navigator.geolocation) {
+               let options = {timeout:60000};
+               navigator.geolocation.getCurrentPosition(showLocation, errorHandler, options);
+            } else {
+               alert("Sorry, browser does not support geolocation!");
+            }
+         }
+        getLocation();
+        
+    </script>
+    
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    
+    
+    
+    <script type="text/javascript">
+        createChart = () => {
+        google.charts.load("current", {packages:['corechart']});
+        google.charts.setOnLoadCallback(drawChart);
+        function drawChart() {
+          var data = google.visualization.arrayToDataTable(temps);
+          var view = new google.visualization.DataView(data);
+          var options = {
+            title: "Temperature in Fahrenheit",
+            width: 1000,
+            height: 600,
+            bar: {groupWidth: "100%"},
+            legend: { position: "none" },
+          };
+          var chart = new google.visualization.ColumnChart(document.getElementById("columnchart_values"));
+          chart.draw(view, options);
+        }
+    };
     </script>
     </body>
 </html>
