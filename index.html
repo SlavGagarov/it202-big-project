@@ -34,7 +34,7 @@
         <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end" role="toolbar">
           <button id="homeButton" class="material-icons mdc-top-app-bar__action-item mdc-icon-button" aria-label="Download">home</button>
           <button id="pokeButton" class="material-icons mdc-top-app-bar__action-item mdc-icon-button" aria-label="Print this page">table_chart</button>
-          <button id="weatherButton" class="material-icons mdc-top-app-bar__action-item mdc-icon-button" aria-label="Bookmark this page">show_chart</button>
+          <button id="historyButton" class="material-icons mdc-top-app-bar__action-item mdc-icon-button" aria-label="Bookmark this page">show_chart</button>
         </section>
       </div>
         </header>
@@ -65,15 +65,26 @@
     </div>
     
     <div class="screen3">
-        sc3
+        <div class="pokeHistory">
+            <h1 class="mdc-typography--headline2">History</h1>
+            <h1 id="pokeName" class="mdc-typography--headline4">Pokemon Name</h1>
+            <div id="stats">
+                <h1 id="pokeStats" class="mdc-typography--headline6">Stats:</h1>
+            </div>
+        </div>
     </div>
     
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
     <script>
         mdc.topAppBar.MDCTopAppBar.attachTo(document.querySelector('header.mdc-top-app-bar'));
 
         let dataRef;
         let chosenPokeLink;
         let chonePokeData;
+        let db = new Dexie("pokeHistory");
+          db.version(1).stores({
+              pokes: 'name, speed, defense, attack, hp'
+          });
         
         const showScreen = (sNumber) =>{
             switch(sNumber) {
@@ -133,6 +144,81 @@
                 }
         }
         
+        const addToHitory = (pokeData) => {
+          let n = pokeData["name"];
+          let s = pokeData["stats"][0]["base_stat"];
+          let d = pokeData["stats"][3]["base_stat"];
+          let a = pokeData["stats"][4]["base_stat"];
+          let h = pokeData["stats"][5]["base_stat"];
+          db.pokes.put({name: n, speed: s, defense: d, attack: a, hp: h}).then (function(){
+              return db.pokes.get(n);
+          }).then(function (poke) {
+              console.log("Added " + poke.name + " to database.");
+          }).catch(function(error) {alert("Database Error: " + error);
+          });
+        }
+        
+        const displayHistory = () => {
+           
+            
+            let pokeName = document.querySelector(".onePoke #pokeName");
+            let pokeStat = document.querySelector(".onePoke #pokeStats");
+            let historyContainer =  document.querySelector(".pokeHistory");
+            
+            while (historyContainer.childNodes.length > 2) {
+                historyContainer.removeChild(historyContainer.lastChild);
+            }
+            
+            db.pokes.toArray()
+            .then ( (arr) => {
+            for (let p of arr) {
+                console.log(p);
+                let clomeName = pokeName.cloneNode(true);
+                clomeName.textContent = p["name"];
+                historyContainer.appendChild(clomeName);
+                
+                let attackStat = pokeStat.cloneNode(true);
+                attackStat.textContent = "attack: " + p["attack"];
+                historyContainer.appendChild(attackStat);
+                
+                let defStat = pokeStat.cloneNode(true);
+                defStat.textContent = "defense: " + p["defense"];
+                historyContainer.appendChild(defStat);
+                
+                let hpStat = pokeStat.cloneNode(true);
+                hpStat.textContent = "hp: " + p["hp"];
+                historyContainer.appendChild(hpStat);
+                
+                let speedStat = pokeStat.cloneNode(true);
+                speedStat.textContent = "speed: " + p["speed"];
+                historyContainer.appendChild(speedStat);
+            }});
+            
+            //console.log (pokes);
+            //console.log (arr);
+            
+            
+            //let clomeName = pokeName.cloneNode(true);
+            //clomeName.textContent = pokes["_value"][0]["name"];
+            
+            /*
+            let pokeStats = document.querySelector(".pokeHistory #pokeStats");
+            let statsHolder =  document.querySelector(".pokeHistory #stats");
+
+            while (statsHolder.childNodes.length > 1) {
+                statsHolder.removeChild(statsHolder.lastChild);
+            }
+
+            for(let i=0; i<chonePokeData["stats"].length; i++)
+                {
+                    let sCopy = pokeStats.cloneNode(true);
+                    classString=chonePokeData["stats"][i]["stat"]["name"] + ": "+ chonePokeData["stats"][i]["base_stat"];
+                    sCopy.textContent=classString;
+                    statsHolder.appendChild(sCopy); 
+                }
+            */
+        }
+        
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', function() {
             navigator.serviceWorker.register('/sw.js').then(function(registration) {
@@ -149,28 +235,31 @@
         document.querySelector("#pokeButton").addEventListener("click", function(){
             showScreen(2);
         });
-        document.querySelector("#weatherButton").addEventListener("click", function(){
+        document.querySelector("#historyButton").addEventListener("click", function(){
             showScreen(3);
+            displayHistory();
         });
         
         document.querySelector("#searchPoke").addEventListener("click", function(){
           let selectedP = document.querySelector("#selectingOptions").value;
-          console.log(selectedP);
+          //console.log(selectedP);
           if(selectedP != ""){
-               console.log(dataRef["results"]);
+               //console.log(dataRef["results"]);
               for(let i = 0; i< dataRef["results"].length; i++){
                   if(dataRef["results"][i]["name"] == selectedP){
                       chosenPokeLink = dataRef["results"][i]["url"];
                       fetch(chosenPokeLink)
                       .then(response => response.json())
                       .then(data => {
-                          console.log(data);
+                          //console.log(data);
                           chonePokeData=data;
                           changePokeData();
+                          addToHitory(chonePokeData);
                           showScreen(2);
                       })};
               }
-              };
+          }
+            
           });
         
 
@@ -186,7 +275,7 @@
                    newOption.value = val["name"];
                    datalistRef.appendChild(newOption);
              });
-            console.log(data);
+            //console.log(data);
             dataRef=data;
         });
         
