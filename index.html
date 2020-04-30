@@ -6,7 +6,7 @@
   <link href="https://unpkg.com/material-components-web@v4.0.0/dist/material-components-web.min.css" rel="stylesheet">
   <script src="https://unpkg.com/material-components-web@v4.0.0/dist/material-components-web.min.js"></script>
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-
+<link rel="manifest" href="manifest.json" />
     <style>
         :root {
             --mdc-theme-primary: green;
@@ -50,7 +50,9 @@
           <span class="mdc-button__label">Go</span>
         </button>
             
+            <br><br><br><br><br><br>
             <h1 id="pokeClass" class="mdc-typography--headline5">Weather Forcast:</h1>
+            
             <div id="columnchart_values" style="width: 900px; height: 300px;"></div>
         </div></div>
     
@@ -76,7 +78,6 @@
             </div>
         </div>
     </div>
-    
     <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
     <script>
         mdc.topAppBar.MDCTopAppBar.attachTo(document.querySelector('header.mdc-top-app-bar'));
@@ -202,26 +203,27 @@
           fetch(endpt)
           .then(response => response.json())
           .then(data => {
-              console.log(data);
+              //console.log(data);
+              
               let nedEnd = data["properties"]["forecast"];
 
               fetch(nedEnd)
               .then(response => response.json())
               .then(data => {
                   let neededData = data["properties"]["periods"];
-                  console.log(neededData);
+                  //console.log(neededData);
                   let daily = [];
                   for(let i=0; i<neededData.length; i++){
-                      if(["Today", "Thursday", "Friday", "Saturday", "Sunday", "Monday", "Tuesday"].includes(neededData[i]["name"])){
+                      if(["Today", "Thursday", "Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday"].includes(neededData[i]["name"])){
                           daily.push(neededData[i]);
                       }
                   }
-                  console.log(daily);
+                  //console.log(daily);
                   for(let i=0; i<daily.length; i++){
                       let dayObj = [daily[i]["name"], daily[i]["temperature"]];
                       temps.push(dayObj);
                   }
-                  console.log(temps);
+                  //console.log(temps);
                   createChart();
               });
           });
@@ -230,9 +232,9 @@
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', function() {
             navigator.serviceWorker.register('sw.js').then(function(registration) {
-              console.log('ServiceWorker registration successful with scope: ', registration.scope);
+              //console.log('ServiceWorker registration successful with scope: ', registration.scope);
             }, function(err) {
-              console.log('ServiceWorker registration failed: ', err);
+              //console.log('ServiceWorker registration failed: ', err);
             });
           });
         }
@@ -314,6 +316,8 @@
          }
         getLocation();
         
+        
+        
     </script>
     
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -336,8 +340,15 @@
           };
           var chart = new google.visualization.ColumnChart(document.getElementById("columnchart_values"));
           chart.draw(view, options);
+            
         }
     };
+    </script>
+    <script>
+        console.log("WHYYYY");
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+          console.log("This is running as standalone.");
+        }else{console.log("not alone");}
     </script>
     </body>
 </html>
