@@ -3,7 +3,7 @@
   "short_name": "ph",
   "theme_color": "#064e03",
   "background_color": "#064e03",
-  "display": "browser",
+  "display": "standalone",
   "orientation": "landscape",
   "start_url": "/index.html",
   "icons": [
